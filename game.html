@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block Puzzle Touch</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:url("bg.jpeg") center/cover no-repeat;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    color:white;
+}
+
+.game{
+    width:100%;
+    max-width:420px;
+    padding:10px;
+    background:rgba(0,0,0,.6);
+    border-radius:10px;
+}
+
+h2{text-align:center;margin:5px 0}
+
+.score{text-align:center;margin-bottom:10px;font-size:18px}
+
+.board{
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    gap:4px;
+    background:#2a2a2a;
+    padding:4px;
+}
+
+.cell{
+    aspect-ratio:1/1;
+    background:#444;
+    border-radius:4px;
+}
+
+.cell.filled{background:#00e5ff}
+
+.blocks{
+    display:flex;
+    justify-content:space-around;
+    margin-top:15px;
+}
+
+.block{
+    display:grid;
+    gap:3px;
+    padding:5px;
+    background:#222;
+    border-radius:6px;
+}
+
+.block.selected{outline:3px solid yellow}
+
+.block div{
+    width:26px;
+    height:26px;
+    background:gold;
+    border-radius:4px;
+}
+
+.credit{
+    text-align:center;
+    margin-top:10px;
+    font-size:12px;
+    color:#00ff6a; /* HIJAU */
+}
+</style>
+</head>
+
+<body>
+
+<audio id="bgMusic" src="beach.mp3" loop></audio>
+
+<div class="game">
+    <h2>Block Puzzle Touch</h2>
+    <div class="score">Skor: <span id="score">0</span></div>
+
+    <div class="board" id="board"></div>
+    <div class="blocks" id="blocks"></div>
+
+    <div class="credit">made by Rafa and venom game</div>
+</div>
+
+<script>
+/* AUDIO */
+function aktifkanAudio(){
+    const m=document.getElementById("bgMusic");
+    m.play();
+    document.removeEventListener("click",aktifkanAudio);
+}
+document.addEventListener("click",aktifkanAudio);
+
+/* GAME */
+const boardSize=8;
+const board=document.getElementById("board");
+const blocksEl=document.getElementById("blocks");
+const scoreEl=document.getElementById("score");
+
+let score=0;
+let selectedShape=null;
+let selectedBlock=null;
+let cells=[];
+
+/* papan */
+for(let i=0;i<64;i++){
+    const c=document.createElement("div");
+    c.className="cell";
+    c.dataset.index=i;
+    board.appendChild(c);
+    cells.push(c);
+
+    c.onclick=()=>{
+        if(!selectedShape) return;
+        if(canPlace(selectedShape,i)){
+            place(selectedShape,i);
+            selectedBlock.remove();
+            selectedShape=null;
+            checkLine();
+            if(blocksEl.children.length===0) createBlocks();
+        }
+    };
+}
+
+/* bentuk */
+const shapes=[
+ [[1,1,1]],
+ [[1,1],[1,1]],
+ [[1],[1],[1]],
+ [[1,1,1],[0,1,0]],
+ [[1,1]]
+];
+
+function createBlocks(){
+    blocksEl.innerHTML="";
+    for(let i=0;i<3;i++){
+        const shape=shapes[Math.floor(Math.random()*shapes.length)];
+        const b=document.createElement("div");
+        b.className="block";
+        b.style.gridTemplateColumns=`repeat(${shape[0].length},26px)`;
+
+        shape.flat().forEach(v=>{
+            const d=document.createElement("div");
+            if(!v) d.style.visibility="hidden";
+            b.appendChild(d);
+        });
+
+        b.onclick=()=>{
+            document.querySelectorAll(".block").forEach(x=>x.classList.remove("selected"));
+            b.classList.add("selected");
+            selectedShape=shape;
+            selectedBlock=b;
+        };
+
+        blocksEl.appendChild(b);
+    }
+}
+
+function canPlace(shape,index){
+    const x=index%boardSize;
+    const y=Math.floor(index/boardSize);
+
+    for(let r=0;r<shape.length;r++){
+        for(let c=0;c<shape[r].length;c++){
+            if(shape[r][c]){
+                const nx=x+c, ny=y+r;
+                if(nx>=boardSize||ny>=boardSize) return false;
+                if(cells[ny*boardSize+nx].classList.contains("filled")) return false;
+            }
+        }
+    }
+    return true;
+}
+
+function place(shape,index){
+    const x=index%boardSize;
+    const y=Math.floor(index/boardSize);
+
+    shape.forEach((row,r)=>{
+        row.forEach((v,c)=>{
+            if(v){
+                cells[(y+r)*boardSize+(x+c)].classList.add("filled");
+            }
+        });
+    });
+}
+
+/* CEK BARIS & KOLOM */
+function checkLine(){
+    let cleared=0;
+
+    // baris
+    for(let r=0;r<boardSize;r++){
+        if([...Array(boardSize)].every((_,c)=>cells[r*8+c].classList.contains("filled"))){
+            for(let c=0;c<8;c++) cells[r*8+c].classList.remove("filled");
+            cleared++;
+        }
+    }
+
+    // kolom
+    for(let c=0;c<boardSize;c++){
+        if([...Array(boardSize)].every((_,r)=>cells[r*8+c].classList.contains("filled"))){
+            for(let r=0;r<8;r++) cells[r*8+c].classList.remove("filled");
+            cleared++;
+        }
+    }
+
+    if(cleared>0){
+        score+=cleared*10;
+        scoreEl.textContent=score;
+    }
+}
+
+createBlocks();
+</script>
+
+</body>
+</html>
