@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Block Puzzle Touch</title>
+<title>Block Puzzle Drag</title>
 
 <style>
 body{
@@ -14,6 +14,7 @@ body{
     display:flex;
     justify-content:center;
     color:white;
+    user-select:none;
 }
 
 .game{
@@ -34,6 +35,7 @@ h2{text-align:center;margin:5px 0}
     gap:4px;
     background:#2a2a2a;
     padding:4px;
+    border-radius:8px;
 }
 
 .cell{
@@ -43,6 +45,7 @@ h2{text-align:center;margin:5px 0}
 }
 
 .cell.filled{background:#00e5ff}
+.cell.preview{outline:2px solid rgba(255,255,0,0.7)}
 
 .blocks{
     display:flex;
@@ -56,9 +59,8 @@ h2{text-align:center;margin:5px 0}
     padding:5px;
     background:#222;
     border-radius:6px;
+    touch-action:none; /* penting untuk drag di HP */
 }
-
-.block.selected{outline:3px solid yellow}
 
 .block div{
     width:26px;
@@ -71,7 +73,57 @@ h2{text-align:center;margin:5px 0}
     text-align:center;
     margin-top:10px;
     font-size:12px;
-    color:#00ff6a; /* HIJAU */
+    color:#00ff6a;
+}
+
+/* GAME OVER */
+.gameover{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.85);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.gameover-box{
+    background:#111;
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+    width:280px;
+    box-shadow:0 0 20px rgba(255,255,255,0.2);
+}
+
+.gameover-box button{
+    margin-top:10px;
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    background:gold;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* ghost drag */
+.ghost{
+    position:fixed;
+    z-index:9999;
+    pointer-events:none;
+    opacity:0.85;
+    transform:translate(-50%,-50%);
+    display:grid;
+    gap:3px;
+    padding:5px;
+    background:rgba(0,0,0,0.35);
+    border-radius:8px;
+}
+.ghost div{
+    width:26px;
+    height:26px;
+    background:gold;
+    border-radius:4px;
 }
 </style>
 </head>
@@ -81,7 +133,7 @@ h2{text-align:center;margin:5px 0}
 <audio id="bgMusic" src="beach.mp3" loop></audio>
 
 <div class="game">
-    <h2>Block Puzzle Touch</h2>
+    <h2>Block Puzzle Drag</h2>
     <div class="score">Skor: <span id="score">0</span></div>
 
     <div class="board" id="board"></div>
@@ -90,14 +142,25 @@ h2{text-align:center;margin:5px 0}
     <div class="credit">made by Rafa and venom game</div>
 </div>
 
+<!-- GAME OVER -->
+<div id="gameOver" class="gameover">
+    <div class="gameover-box">
+        <h2>GAME OVER</h2>
+        <p>Skor Kamu: <span id="finalScore">0</span></p>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+</div>
+
 <script>
 /* AUDIO */
 function aktifkanAudio(){
     const m=document.getElementById("bgMusic");
     m.play();
     document.removeEventListener("click",aktifkanAudio);
+    document.removeEventListener("touchstart",aktifkanAudio);
 }
 document.addEventListener("click",aktifkanAudio);
+document.addEventListener("touchstart",aktifkanAudio);
 
 /* GAME */
 const boardSize=8;
@@ -105,10 +168,15 @@ const board=document.getElementById("board");
 const blocksEl=document.getElementById("blocks");
 const scoreEl=document.getElementById("score");
 
+const gameOverEl=document.getElementById("gameOver");
+const finalScoreEl=document.getElementById("finalScore");
+
 let score=0;
-let selectedShape=null;
-let selectedBlock=null;
 let cells=[];
+
+let draggingBlock=null;
+let draggingShape=null;
+let ghost=null;
 
 /* papan */
 for(let i=0;i<64;i++){
@@ -117,17 +185,6 @@ for(let i=0;i<64;i++){
     c.dataset.index=i;
     board.appendChild(c);
     cells.push(c);
-
-    c.onclick=()=>{
-        if(!selectedShape) return;
-        if(canPlace(selectedShape,i)){
-            place(selectedShape,i);
-            selectedBlock.remove();
-            selectedShape=null;
-            checkLine();
-            if(blocksEl.children.length===0) createBlocks();
-        }
-    };
 }
 
 /* bentuk */
@@ -146,6 +203,7 @@ function createBlocks(){
         const b=document.createElement("div");
         b.className="block";
         b.style.gridTemplateColumns=`repeat(${shape[0].length},26px)`;
+        b.shapeData=shape;
 
         shape.flat().forEach(v=>{
             const d=document.createElement("div");
@@ -153,14 +211,111 @@ function createBlocks(){
             b.appendChild(d);
         });
 
-        b.onclick=()=>{
-            document.querySelectorAll(".block").forEach(x=>x.classList.remove("selected"));
-            b.classList.add("selected");
-            selectedShape=shape;
-            selectedBlock=b;
-        };
+        // DRAG START
+        b.addEventListener("pointerdown",(e)=>{
+            draggingBlock=b;
+            draggingShape=b.shapeData;
+
+            // buat ghost
+            ghost=createGhost(draggingShape);
+            document.body.appendChild(ghost);
+            moveGhost(e.clientX,e.clientY);
+
+            b.setPointerCapture(e.pointerId);
+        });
+
+        // DRAG MOVE
+        b.addEventListener("pointermove",(e)=>{
+            if(!draggingBlock) return;
+            moveGhost(e.clientX,e.clientY);
+            previewOnBoard(e.clientX,e.clientY);
+        });
+
+        // DRAG END
+        b.addEventListener("pointerup",(e)=>{
+            if(!draggingBlock) return;
+
+            const dropIndex=getCellIndexFromPoint(e.clientX,e.clientY);
+
+            clearPreview();
+
+            if(dropIndex!==null && canPlace(draggingShape,dropIndex)){
+                place(draggingShape,dropIndex);
+                draggingBlock.remove();
+
+                checkLine();
+
+                if(blocksEl.children.length===0) createBlocks();
+
+                if(isGameOver()) showGameOver();
+            }
+
+            // hapus ghost
+            if(ghost) ghost.remove();
+            ghost=null;
+
+            draggingBlock=null;
+            draggingShape=null;
+        });
 
         blocksEl.appendChild(b);
+    }
+}
+
+/* ghost */
+function createGhost(shape){
+    const g=document.createElement("div");
+    g.className="ghost";
+    g.style.gridTemplateColumns=`repeat(${shape[0].length},26px)`;
+
+    shape.flat().forEach(v=>{
+        const d=document.createElement("div");
+        if(!v) d.style.visibility="hidden";
+        g.appendChild(d);
+    });
+
+    return g;
+}
+function moveGhost(x,y){
+    if(!ghost) return;
+    ghost.style.left=x+"px";
+    ghost.style.top=y+"px";
+}
+
+/* board helper */
+function getCellIndexFromPoint(x,y){
+    const el=document.elementFromPoint(x,y);
+    if(!el) return null;
+
+    if(el.classList.contains("cell")){
+        return parseInt(el.dataset.index);
+    }
+    return null;
+}
+
+/* preview */
+function clearPreview(){
+    cells.forEach(c=>c.classList.remove("preview"));
+}
+
+function previewOnBoard(x,y){
+    clearPreview();
+    const index=getCellIndexFromPoint(x,y);
+    if(index===null) return;
+
+    if(!canPlace(draggingShape,index)) return;
+
+    const startX=index%boardSize;
+    const startY=Math.floor(index/boardSize);
+
+    for(let r=0;r<draggingShape.length;r++){
+        for(let c=0;c<draggingShape[r].length;c++){
+            if(draggingShape[r][c]){
+                const nx=startX+c;
+                const ny=startY+r;
+                cells[ny*boardSize+nx].classList.add("preview");
+            }
+        }
     }
 }
 
@@ -217,6 +372,34 @@ function checkLine(){
         score+=cleared*10;
         scoreEl.textContent=score;
     }
+}
+
+/* GAME OVER */
+function isGameOver(){
+    const blocks=[...blocksEl.children];
+
+    for(let b of blocks){
+        const shape=b.shapeData;
+
+        for(let i=0;i<64;i++){
+            if(canPlace(shape,i)) return false;
+        }
+    }
+    return true;
+}
+
+function showGameOver(){
+    finalScoreEl.textContent=score;
+    gameOverEl.style.display="flex";
+}
+
+function restartGame(){
+    cells.forEach(c=>c.classList.remove("filled"));
+    score=0;
+    scoreEl.textContent=0;
+
+    createBlocks();
+    gameOverEl.style.display="none";
 }
 
 createBlocks();
