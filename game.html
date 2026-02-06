@@ -1,129 +1,203 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Block Puzzle Drag</title>
 
 <style>
+:root{
+    --maxWidth: 460px;
+    --cell: clamp(26px, 8vw, 44px);
+    --gap: clamp(3px, 1.2vw, 6px);
+
+    --gold: #ffcc00;
+    --shadow: #c9a200;
+}
+
+*{box-sizing:border-box;}
+
 body{
     margin:0;
-    font-family:Arial, sans-serif;
-    background:url("bg.jpeg") center/cover no-repeat;
+    font-family: Arial, sans-serif;
+    background: url("bg.jpeg") center/cover no-repeat fixed;
     min-height:100vh;
-    display:flex;
-    justify-content:center;
     color:white;
     user-select:none;
+
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:14px;
+}
+
+.wrapper{
+    width:100%;
+    max-width: var(--maxWidth);
 }
 
 .game{
     width:100%;
-    max-width:420px;
-    padding:10px;
-    background:rgba(0,0,0,.6);
-    border-radius:10px;
+    padding:12px;
+    background: rgba(0,0,0,.62);
+    border-radius:14px;
+    backdrop-filter: blur(2px);
 }
 
-h2{text-align:center;margin:5px 0}
+h2{
+    text-align:center;
+    margin:6px 0 8px 0;
+    font-size:22px;
+}
 
-.score{text-align:center;margin-bottom:10px;font-size:18px}
+.score{
+    text-align:center;
+    margin-bottom:12px;
+    font-size:18px;
+}
 
+/* BOARD */
 .board{
     display:grid;
-    grid-template-columns:repeat(8,1fr);
-    gap:4px;
+    grid-template-columns: repeat(8, var(--cell));
+    gap: var(--gap);
+    justify-content:center;
+
     background:#2a2a2a;
-    padding:4px;
-    border-radius:8px;
+    padding: var(--gap);
+    border-radius:12px;
 }
 
 .cell{
-    aspect-ratio:1/1;
+    width: var(--cell);
+    height: var(--cell);
     background:#444;
-    border-radius:4px;
+    border-radius:6px;
 }
 
-.cell.filled{background:#00e5ff}
-.cell.preview{outline:2px solid rgba(255,255,0,0.7)}
+.cell.filled{ background:#00e5ff; }
+.cell.preview{ outline:2px solid rgba(255,255,0,0.7); }
 
+/* BLOCKS */
 .blocks{
     display:flex;
     justify-content:space-around;
-    margin-top:15px;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:nowrap;
 }
 
 .block{
     display:grid;
-    gap:3px;
-    padding:5px;
+    gap: calc(var(--gap) - 1px);
+    padding:8px;
     background:#222;
-    border-radius:6px;
-    touch-action:none; /* penting untuk drag di HP */
+    border-radius:10px;
+    touch-action:none;
 }
 
 .block div{
-    width:26px;
-    height:26px;
-    background:gold;
-    border-radius:4px;
+    width: var(--cell);
+    height: var(--cell);
+    background: gold;
+    border-radius:6px;
+}
+
+/* FOOTER */
+.footer{
+    margin-top: 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
 }
 
 .credit{
     text-align:center;
-    margin-top:10px;
     font-size:12px;
     color:#00ff6a;
+}
+
+.btn-kembali{
+    display:inline-block;
+    padding:14px 30px;
+    background: var(--gold);
+    color:#000;
+    font-size:18px;
+    font-weight:bold;
+    border-radius:14px;
+    text-decoration:none;
+    box-shadow:0 6px 0 var(--shadow);
+    transition:0.2s;
+}
+
+.btn-kembali:hover{
+    transform:translateY(-2px);
+}
+
+.btn-kembali:active{
+    transform:translateY(4px);
+    box-shadow:0 2px 0 var(--shadow);
 }
 
 /* GAME OVER */
 .gameover{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.85);
     display:none;
     justify-content:center;
     align-items:center;
     z-index:999;
+    padding:20px;
 }
 
 .gameover-box{
     background:#111;
-    padding:20px;
-    border-radius:12px;
+    padding:22px;
+    border-radius:14px;
     text-align:center;
-    width:280px;
-    box-shadow:0 0 20px rgba(255,255,255,0.2);
+    width:min(320px, 92vw);
+    box-shadow:0 0 20px rgba(255,255,255,0.18);
 }
 
 .gameover-box button{
-    margin-top:10px;
-    padding:10px 18px;
+    margin-top:12px;
+    padding:12px 18px;
     border:none;
-    border-radius:8px;
-    background:gold;
+    border-radius:10px;
+    background: gold;
     font-weight:bold;
     cursor:pointer;
 }
 
-/* ghost drag */
+/* GHOST DRAG */
 .ghost{
     position:fixed;
     z-index:9999;
     pointer-events:none;
     opacity:0.85;
-    transform:translate(-50%,-50%);
+    transform: translate(-50%,-50%);
     display:grid;
-    gap:3px;
-    padding:5px;
-    background:rgba(0,0,0,0.35);
-    border-radius:8px;
+    gap: calc(var(--gap) - 1px);
+    padding:8px;
+    background: rgba(0,0,0,0.35);
+    border-radius:12px;
 }
+
 .ghost div{
-    width:26px;
-    height:26px;
-    background:gold;
-    border-radius:4px;
+    width: var(--cell);
+    height: var(--cell);
+    background: gold;
+    border-radius:6px;
+}
+
+/* HP kecil */
+@media (max-width:360px){
+    h2{font-size:20px;}
+    .score{font-size:16px;}
+    .btn-kembali{font-size:16px;padding:12px 24px;}
 }
 </style>
 </head>
@@ -132,14 +206,19 @@ h2{text-align:center;margin:5px 0}
 
 <audio id="bgMusic" src="beach.mp3" loop></audio>
 
-<div class="game">
-    <h2>Block Puzzle Drag</h2>
-    <div class="score">Skor: <span id="score">0</span></div>
+<div class="wrapper">
+    <div class="game">
+        <h2>Block Puzzle Drag</h2>
+        <div class="score">Skor: <span id="score">0</span></div>
 
-    <div class="board" id="board"></div>
-    <div class="blocks" id="blocks"></div>
+        <div class="board" id="board"></div>
+        <div class="blocks" id="blocks"></div>
 
-    <div class="credit">made by Rafa and venom game</div>
+        <div class="footer">
+            <div class="credit">made by Rafa and venom game</div>
+            <a href="index.html" class="btn-kembali">Kembali</a>
+        </div>
+    </div>
 </div>
 
 <!-- GAME OVER -->
@@ -154,108 +233,105 @@ h2{text-align:center;margin:5px 0}
 <script>
 /* AUDIO */
 function aktifkanAudio(){
-    const m=document.getElementById("bgMusic");
-    m.play();
-    document.removeEventListener("click",aktifkanAudio);
-    document.removeEventListener("touchstart",aktifkanAudio);
+    const m = document.getElementById("bgMusic");
+    m.play().catch(()=>{});
 }
-document.addEventListener("click",aktifkanAudio);
-document.addEventListener("touchstart",aktifkanAudio);
+document.addEventListener("click", aktifkanAudio, { once:true });
+document.addEventListener("touchstart", aktifkanAudio, { once:true });
 
 /* GAME */
-const boardSize=8;
-const board=document.getElementById("board");
-const blocksEl=document.getElementById("blocks");
-const scoreEl=document.getElementById("score");
+const boardSize = 8;
+const board = document.getElementById("board");
+const blocksEl = document.getElementById("blocks");
+const scoreEl = document.getElementById("score");
 
-const gameOverEl=document.getElementById("gameOver");
-const finalScoreEl=document.getElementById("finalScore");
+const gameOverEl = document.getElementById("gameOver");
+const finalScoreEl = document.getElementById("finalScore");
 
-let score=0;
-let cells=[];
+let score = 0;
+let cells = [];
 
-let draggingBlock=null;
-let draggingShape=null;
-let ghost=null;
+let draggingBlock = null;
+let draggingShape = null;
+let ghost = null;
 
 /* papan */
-for(let i=0;i<64;i++){
-    const c=document.createElement("div");
-    c.className="cell";
-    c.dataset.index=i;
+for(let i=0;i<boardSize*boardSize;i++){
+    const c = document.createElement("div");
+    c.className = "cell";
+    c.dataset.index = i;
     board.appendChild(c);
     cells.push(c);
 }
 
 /* bentuk */
-const shapes=[
- [[1,1,1]],
- [[1,1],[1,1]],
- [[1],[1],[1]],
- [[1,1,1],[0,1,0]],
- [[1,1]]
+const shapes = [
+    [[1,1,1]],
+    [[1,1],[1,1]],
+    [[1],[1],[1]],
+    [[1,1,1],[0,1,0]],
+    [[1,1]]
 ];
 
 function createBlocks(){
-    blocksEl.innerHTML="";
+    blocksEl.innerHTML = "";
+
     for(let i=0;i<3;i++){
-        const shape=shapes[Math.floor(Math.random()*shapes.length)];
-        const b=document.createElement("div");
-        b.className="block";
-        b.style.gridTemplateColumns=`repeat(${shape[0].length},26px)`;
-        b.shapeData=shape;
+        const shape = shapes[Math.floor(Math.random()*shapes.length)];
+        const b = document.createElement("div");
+        b.className = "block";
+        b.style.gridTemplateColumns = `repeat(${shape[0].length}, var(--cell))`;
+        b.shapeData = shape;
 
         shape.flat().forEach(v=>{
-            const d=document.createElement("div");
+            const d = document.createElement("div");
             if(!v) d.style.visibility="hidden";
             b.appendChild(d);
         });
 
-        // DRAG START
+        /* DRAG START */
         b.addEventListener("pointerdown",(e)=>{
-            draggingBlock=b;
-            draggingShape=b.shapeData;
+            draggingBlock = b;
+            draggingShape = b.shapeData;
 
-            // buat ghost
-            ghost=createGhost(draggingShape);
+            ghost = createGhost(draggingShape);
             document.body.appendChild(ghost);
-            moveGhost(e.clientX,e.clientY);
+            moveGhost(e.clientX, e.clientY);
 
             b.setPointerCapture(e.pointerId);
         });
 
-        // DRAG MOVE
+        /* DRAG MOVE */
         b.addEventListener("pointermove",(e)=>{
             if(!draggingBlock) return;
-            moveGhost(e.clientX,e.clientY);
-            previewOnBoard(e.clientX,e.clientY);
-        });
+            moveGhost(e.clientX, e.clientY);
+            previewOnBoard(e.clientX, e.clientY);
+            e.preventDefault();
+        }, { passive:false });
 
-        // DRAG END
+        /* DRAG END */
         b.addEventListener("pointerup",(e)=>{
             if(!draggingBlock) return;
 
-            const dropIndex=getCellIndexFromPoint(e.clientX,e.clientY);
+            const dropIndex = getCellIndexFromPoint(e.clientX, e.clientY);
 
             clearPreview();
 
-            if(dropIndex!==null && canPlace(draggingShape,dropIndex)){
-                place(draggingShape,dropIndex);
+            if(dropIndex !== null && canPlace(draggingShape, dropIndex)){
+                place(draggingShape, dropIndex);
                 draggingBlock.remove();
 
                 checkLine();
 
-                if(blocksEl.children.length===0) createBlocks();
-
+                if(blocksEl.children.length === 0) createBlocks();
                 if(isGameOver()) showGameOver();
             }
 
-            // hapus ghost
             if(ghost) ghost.remove();
-            ghost=null;
+            ghost = null;
 
-            draggingBlock=null;
-            draggingShape=null;
+            draggingBlock = null;
+            draggingShape = null;
         });
 
         blocksEl.appendChild(b);
@@ -264,32 +340,30 @@ function createBlocks(){
 
 /* ghost */
 function createGhost(shape){
-    const g=document.createElement("div");
-    g.className="ghost";
-    g.style.gridTemplateColumns=`repeat(${shape[0].length},26px)`;
+    const g = document.createElement("div");
+    g.className = "ghost";
+    g.style.gridTemplateColumns = `repeat(${shape[0].length}, var(--cell))`;
 
     shape.flat().forEach(v=>{
-        const d=document.createElement("div");
+        const d = document.createElement("div");
         if(!v) d.style.visibility="hidden";
         g.appendChild(d);
     });
 
     return g;
 }
+
 function moveGhost(x,y){
     if(!ghost) return;
-    ghost.style.left=x+"px";
-    ghost.style.top=y+"px";
+    ghost.style.left = x + "px";
+    ghost.style.top = y + "px";
 }
 
-/* board helper */
+/* helper */
 function getCellIndexFromPoint(x,y){
-    const el=document.elementFromPoint(x,y);
+    const el = document.elementFromPoint(x,y);
     if(!el) return null;
-
-    if(el.classList.contains("cell")){
-        return parseInt(el.dataset.index);
-    }
+    if(el.classList.contains("cell")) return parseInt(el.dataset.index);
     return null;
 }
 
@@ -300,35 +374,36 @@ function clearPreview(){
 
 function previewOnBoard(x,y){
     clearPreview();
-    const index=getCellIndexFromPoint(x,y);
-    if(index===null) return;
+    const index = getCellIndexFromPoint(x,y);
+    if(index === null) return;
+    if(!canPlace(draggingShape, index)) return;
 
-    if(!canPlace(draggingShape,index)) return;
-
-    const startX=index%boardSize;
-    const startY=Math.floor(index/boardSize);
+    const startX = index % boardSize;
+    const startY = Math.floor(index / boardSize);
 
     for(let r=0;r<draggingShape.length;r++){
         for(let c=0;c<draggingShape[r].length;c++){
             if(draggingShape[r][c]){
-                const nx=startX+c;
-                const ny=startY+r;
-                cells[ny*boardSize+nx].classList.add("preview");
+                const nx = startX + c;
+                const ny = startY + r;
+                cells[ny*boardSize + nx].classList.add("preview");
             }
         }
     }
 }
 
 function canPlace(shape,index){
-    const x=index%boardSize;
-    const y=Math.floor(index/boardSize);
+    const x = index % boardSize;
+    const y = Math.floor(index / boardSize);
 
     for(let r=0;r<shape.length;r++){
         for(let c=0;c<shape[r].length;c++){
             if(shape[r][c]){
-                const nx=x+c, ny=y+r;
-                if(nx>=boardSize||ny>=boardSize) return false;
-                if(cells[ny*boardSize+nx].classList.contains("filled")) return false;
+                const nx = x + c;
+                const ny = y + r;
+
+                if(nx >= boardSize || ny >= boardSize) return false;
+                if(cells[ny*boardSize + nx].classList.contains("filled")) return false;
             }
         }
     }
@@ -336,13 +411,13 @@ function canPlace(shape,index){
 }
 
 function place(shape,index){
-    const x=index%boardSize;
-    const y=Math.floor(index/boardSize);
+    const x = index % boardSize;
+    const y = Math.floor(index / boardSize);
 
     shape.forEach((row,r)=>{
         row.forEach((v,c)=>{
             if(v){
-                cells[(y+r)*boardSize+(x+c)].classList.add("filled");
+                cells[(y+r)*boardSize + (x+c)].classList.add("filled");
             }
         });
     });
@@ -350,38 +425,55 @@ function place(shape,index){
 
 /* CEK BARIS & KOLOM */
 function checkLine(){
-    let cleared=0;
+    let cleared = 0;
 
-    // baris
+    /* baris */
     for(let r=0;r<boardSize;r++){
-        if([...Array(boardSize)].every((_,c)=>cells[r*8+c].classList.contains("filled"))){
-            for(let c=0;c<8;c++) cells[r*8+c].classList.remove("filled");
+        let full = true;
+        for(let c=0;c<boardSize;c++){
+            if(!cells[r*boardSize + c].classList.contains("filled")){
+                full = false;
+                break;
+            }
+        }
+        if(full){
+            for(let c=0;c<boardSize;c++){
+                cells[r*boardSize + c].classList.remove("filled");
+            }
             cleared++;
         }
     }
 
-    // kolom
+    /* kolom */
     for(let c=0;c<boardSize;c++){
-        if([...Array(boardSize)].every((_,r)=>cells[r*8+c].classList.contains("filled"))){
-            for(let r=0;r<8;r++) cells[r*8+c].classList.remove("filled");
+        let full = true;
+        for(let r=0;r<boardSize;r++){
+            if(!cells[r*boardSize + c].classList.contains("filled")){
+                full = false;
+                break;
+            }
+        }
+        if(full){
+            for(let r=0;r<boardSize;r++){
+                cells[r*boardSize + c].classList.remove("filled");
+            }
             cleared++;
         }
     }
 
-    if(cleared>0){
-        score+=cleared*10;
-        scoreEl.textContent=score;
+    if(cleared > 0){
+        score += cleared * 10;
+        scoreEl.textContent = score;
     }
 }
 
 /* GAME OVER */
 function isGameOver(){
-    const blocks=[...blocksEl.children];
+    const blocks = [...blocksEl.children];
 
     for(let b of blocks){
-        const shape=b.shapeData;
-
-        for(let i=0;i<64;i++){
+        const shape = b.shapeData;
+        for(let i=0;i<boardSize*boardSize;i++){
             if(canPlace(shape,i)) return false;
         }
     }
@@ -389,17 +481,17 @@ function isGameOver(){
 }
 
 function showGameOver(){
-    finalScoreEl.textContent=score;
-    gameOverEl.style.display="flex";
+    finalScoreEl.textContent = score;
+    gameOverEl.style.display = "flex";
 }
 
 function restartGame(){
     cells.forEach(c=>c.classList.remove("filled"));
-    score=0;
-    scoreEl.textContent=0;
+    score = 0;
+    scoreEl.textContent = 0;
 
     createBlocks();
-    gameOverEl.style.display="none";
+    gameOverEl.style.display = "none";
 }
 
 createBlocks();
