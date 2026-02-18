@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -138,7 +138,7 @@ h2{
     padding-bottom:4px;
 }
 
-/* biar scroll di hp halus */
+/* smooth scroll on mobile */
 .blocks::-webkit-scrollbar{
     height:6px;
 }
@@ -271,7 +271,7 @@ h2{
 }
 
 /* ===================== */
-/* HP KECIL */
+/* SMALL PHONES */
 /* ===================== */
 @media (max-width:360px){
     h2{ font-size:20px; }
@@ -284,23 +284,23 @@ h2{
 
 <body>
 
-<!-- TOMBOL MUSIK -->
+<!-- MUSIC BUTTON -->
 <button id="musicBtn" onclick="toggleMusic()">🎵</button>
 
-<!-- AUDIO (TIDAK AUTOPLAY) -->
+<!-- AUDIO (NO AUTOPLAY) -->
 <audio id="bgMusic" src="beach.mp3" loop preload="auto"></audio>
 
 <div class="wrapper">
     <div class="game">
         <h2>Block Puzzle Drag</h2>
-        <div class="score">Skor: <span id="score">0</span></div>
+        <div class="score">Score: <span id="score">0</span></div>
 
         <div class="board" id="board"></div>
         <div class="blocks" id="blocks"></div>
 
         <div class="footer">
             <div class="credit">made by Rafa and venom game</div>
-            <a href="index.html" class="btn-kembali">Kembali</a>
+            <a href="index.html" class="btn-kembali">Back</a>
         </div>
     </div>
 </div>
@@ -309,14 +309,14 @@ h2{
 <div id="gameOver" class="gameover">
     <div class="gameover-box">
         <h2>GAME OVER</h2>
-        <p>Skor Kamu: <span id="finalScore">0</span></p>
+        <p>Your Score: <span id="finalScore">0</span></p>
         <button onclick="restartGame()">Restart</button>
     </div>
 </div>
 
 <script>
 /* ===================== */
-/* MUSIK: PLAY / PAUSE */
+/* MUSIC: PLAY / PAUSE */
 /* ===================== */
 let musicOn = false;
 const musicBtn = document.getElementById("musicBtn");
@@ -328,7 +328,7 @@ function toggleMusic(){
             musicOn = true;
             musicBtn.innerHTML = "🔊";
         }).catch(()=>{
-            // kalau browser blokir, user tinggal klik lagi
+            // if browser blocks it, user can click again
         });
     }else{
         bgMusic.pause();
@@ -355,7 +355,7 @@ let draggingBlock = null;
 let draggingShape = null;
 let ghost = null;
 
-/* papan */
+/* board */
 for(let i=0;i<boardSize*boardSize;i++){
     const c = document.createElement("div");
     c.className = "cell";
@@ -364,7 +364,7 @@ for(let i=0;i<boardSize*boardSize;i++){
     cells.push(c);
 }
 
-/* bentuk */
+/* shapes */
 const shapes = [
     [[1,1,1]],
     [[1,1],[1,1]],
@@ -523,11 +523,11 @@ function place(shape,index){
     });
 }
 
-/* CEK BARIS & KOLOM */
+/* CHECK ROWS & COLUMNS */
 function checkLine(){
     let cleared = 0;
 
-    /* baris */
+    /* rows */
     for(let r=0;r<boardSize;r++){
         let full = true;
         for(let c=0;c<boardSize;c++){
@@ -544,7 +544,7 @@ function checkLine(){
         }
     }
 
-    /* kolom */
+    /* columns */
     for(let c=0;c<boardSize;c++){
         let full = true;
         for(let r=0;r<boardSize;r++){
