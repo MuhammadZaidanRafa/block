@@ -7,15 +7,18 @@
 
 <style>
 :root{
-    --maxWidth: 460px;
-    --cell: clamp(26px, 8vw, 44px);
+    --maxWidth: 520px;
+    --cell: clamp(26px, 8.2vw, 46px);
     --gap: clamp(3px, 1.2vw, 6px);
 
     --gold: #ffcc00;
     --shadow: #c9a200;
+
+    --glass: rgba(0,0,0,.62);
+    --glass2: rgba(255,255,255,0.08);
 }
 
-*{box-sizing:border-box;}
+*{ box-sizing:border-box; }
 
 body{
     margin:0;
@@ -28,26 +31,65 @@ body{
     display:flex;
     justify-content:center;
     align-items:flex-start;
+
     padding:14px;
+    overflow-x:hidden;
 }
 
+/* ===================== */
+/* MUSIC BUTTON */
+/* ===================== */
+#musicBtn{
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 9999;
+    transition: 0.2s;
+}
+
+#musicBtn:hover{
+    transform: scale(1.08);
+    background: rgba(0,0,0,0.9);
+}
+
+#musicBtn:active{
+    transform: scale(0.95);
+}
+
+/* ===================== */
+/* WRAPPER */
+/* ===================== */
 .wrapper{
     width:100%;
     max-width: var(--maxWidth);
+    margin-top: 8px;
 }
 
 .game{
     width:100%;
-    padding:12px;
-    background: rgba(0,0,0,.62);
-    border-radius:14px;
+    padding:14px;
+    background: var(--glass);
+    border-radius:16px;
     backdrop-filter: blur(2px);
+    box-shadow: 0 0 20px rgba(0,0,0,0.35);
 }
 
+/* ===================== */
+/* HEADER */
+/* ===================== */
 h2{
     text-align:center;
     margin:6px 0 8px 0;
     font-size:22px;
+    letter-spacing:0.5px;
 }
 
 .score{
@@ -56,7 +98,9 @@ h2{
     font-size:18px;
 }
 
+/* ===================== */
 /* BOARD */
+/* ===================== */
 .board{
     display:grid;
     grid-template-columns: repeat(8, var(--cell));
@@ -65,27 +109,42 @@ h2{
 
     background:#2a2a2a;
     padding: var(--gap);
-    border-radius:12px;
+    border-radius:14px;
+
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06);
 }
 
 .cell{
     width: var(--cell);
     height: var(--cell);
     background:#444;
-    border-radius:6px;
+    border-radius:8px;
 }
 
 .cell.filled{ background:#00e5ff; }
 .cell.preview{ outline:2px solid rgba(255,255,0,0.7); }
 
+/* ===================== */
 /* BLOCKS */
+/* ===================== */
 .blocks{
     display:flex;
-    justify-content:space-around;
+    justify-content:space-between;
     align-items:center;
     gap:10px;
     margin-top:14px;
     flex-wrap:nowrap;
+    overflow-x:auto;
+    padding-bottom:4px;
+}
+
+/* biar scroll di hp halus */
+.blocks::-webkit-scrollbar{
+    height:6px;
+}
+.blocks::-webkit-scrollbar-thumb{
+    background: rgba(255,255,255,0.15);
+    border-radius:10px;
 }
 
 .block{
@@ -93,18 +152,22 @@ h2{
     gap: calc(var(--gap) - 1px);
     padding:8px;
     background:#222;
-    border-radius:10px;
+    border-radius:12px;
     touch-action:none;
+    flex: 0 0 auto;
+    box-shadow: 0 0 12px rgba(0,0,0,0.35);
 }
 
 .block div{
     width: var(--cell);
     height: var(--cell);
     background: gold;
-    border-radius:6px;
+    border-radius:8px;
 }
 
+/* ===================== */
 /* FOOTER */
+/* ===================== */
 .footer{
     margin-top: 14px;
     display:flex;
@@ -117,10 +180,13 @@ h2{
     text-align:center;
     font-size:12px;
     color:#00ff6a;
+    opacity:0.9;
 }
 
 .btn-kembali{
     display:inline-block;
+    width:100%;
+    text-align:center;
     padding:14px 30px;
     background: var(--gold);
     color:#000;
@@ -141,7 +207,9 @@ h2{
     box-shadow:0 2px 0 var(--shadow);
 }
 
+/* ===================== */
 /* GAME OVER */
+/* ===================== */
 .gameover{
     position:fixed;
     inset:0;
@@ -156,55 +224,71 @@ h2{
 .gameover-box{
     background:#111;
     padding:22px;
-    border-radius:14px;
+    border-radius:16px;
     text-align:center;
-    width:min(320px, 92vw);
+    width:min(340px, 92vw);
     box-shadow:0 0 20px rgba(255,255,255,0.18);
+}
+
+.gameover-box h2{
+    margin-top:0;
 }
 
 .gameover-box button{
     margin-top:12px;
     padding:12px 18px;
     border:none;
-    border-radius:10px;
+    border-radius:12px;
     background: gold;
     font-weight:bold;
     cursor:pointer;
+    width:100%;
+    font-size:16px;
 }
 
+/* ===================== */
 /* GHOST DRAG */
+/* ===================== */
 .ghost{
     position:fixed;
     z-index:9999;
     pointer-events:none;
-    opacity:0.85;
+    opacity:0.88;
     transform: translate(-50%,-50%);
     display:grid;
     gap: calc(var(--gap) - 1px);
     padding:8px;
     background: rgba(0,0,0,0.35);
     border-radius:12px;
+    box-shadow: 0 0 18px rgba(0,0,0,0.35);
 }
 
 .ghost div{
     width: var(--cell);
     height: var(--cell);
     background: gold;
-    border-radius:6px;
+    border-radius:8px;
 }
 
-/* HP kecil */
+/* ===================== */
+/* HP KECIL */
+/* ===================== */
 @media (max-width:360px){
-    h2{font-size:20px;}
-    .score{font-size:16px;}
-    .btn-kembali{font-size:16px;padding:12px 24px;}
+    h2{ font-size:20px; }
+    .score{ font-size:16px; }
+    .btn-kembali{ font-size:16px; padding:12px 22px; }
+    #musicBtn{ width:44px; height:44px; font-size:18px; }
 }
 </style>
 </head>
 
 <body>
 
-<audio id="bgMusic" src="beach.mp3" loop></audio>
+<!-- TOMBOL MUSIK -->
+<button id="musicBtn" onclick="toggleMusic()">🎵</button>
+
+<!-- AUDIO (TIDAK AUTOPLAY) -->
+<audio id="bgMusic" src="beach.mp3" loop preload="auto"></audio>
 
 <div class="wrapper">
     <div class="game">
@@ -231,15 +315,31 @@ h2{
 </div>
 
 <script>
-/* AUDIO */
-function aktifkanAudio(){
-    const m = document.getElementById("bgMusic");
-    m.play().catch(()=>{});
-}
-document.addEventListener("click", aktifkanAudio, { once:true });
-document.addEventListener("touchstart", aktifkanAudio, { once:true });
+/* ===================== */
+/* MUSIK: PLAY / PAUSE */
+/* ===================== */
+let musicOn = false;
+const musicBtn = document.getElementById("musicBtn");
+const bgMusic = document.getElementById("bgMusic");
 
+function toggleMusic(){
+    if(!musicOn){
+        bgMusic.play().then(()=>{
+            musicOn = true;
+            musicBtn.innerHTML = "🔊";
+        }).catch(()=>{
+            // kalau browser blokir, user tinggal klik lagi
+        });
+    }else{
+        bgMusic.pause();
+        musicOn = false;
+        musicBtn.innerHTML = "🎵";
+    }
+}
+
+/* ===================== */
 /* GAME */
+/* ===================== */
 const boardSize = 8;
 const board = document.getElementById("board");
 const blocksEl = document.getElementById("blocks");
